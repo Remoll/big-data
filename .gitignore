@@ -1,6 +1,5 @@
 DO_NOT_OPEN_!!!.txt
 node_modules/
-package.json
 package-lock.json
 diagrams/
 diagrams/* 
