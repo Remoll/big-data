@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <label>
+      Chunk size (MB):
+      <input type="number" id="chunksize-input" min="1" step="1" value="10" />
+    </label>
+    <button id="run-btn">RUN</button>
+    <button id="start-worker-btn">Start Worker</button>
+    <h2>Lista workerów</h2>
+    <p><span id="counter"></span> / <span id="all-workers"></span></p>
+    <div id="workers-list"></div>
+    <script>
+      async function fetchWorkers() {
+        const res = await fetch("/api/workers");
+        return res.json();
+      }
+      async function setWorkerEnabled(id, enabled) {
+        await fetch("/api/worker/" + id, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ enabled }),
+        });
+      }
+      async function setChunkSize(size) {
+        await fetch("/api/chunksize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chunkSize: size }),
+        });
+      }
+      async function runOperation() {
+        await fetch("/api/run", { method: "POST" });
+      }
+      async function startWorker() {
+        await fetch("/api/start-worker", { method: "POST" });
+      }
+      function renderWorkers(workers) {
+        const list = document.getElementById("workers-list");
+        list.innerHTML = "";
+        workers.forEach((w) => {
+          const label = document.createElement("label");
+          label.style.display = "block";
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.checked = w.enabled;
+          cb.onchange = () => setWorkerEnabled(w.idWorker, cb.checked);
+          label.appendChild(cb);
+          label.appendChild(document.createTextNode(" Worker #" + w.idWorker));
+          list.appendChild(label);
+        });
+      }
+      function renderCounter(workers) {
+        const counter = document.getElementById("counter");
+        const allWorkers = document.getElementById("all-workers");
+        const total = workers.filter((w) => w.enabled);
+        counter.textContent = Object.keys(total).length;
+        allWorkers.textContent = workers.length;
+      }
+      async function refresh() {
+        const workers = await fetchWorkers();
+        renderWorkers(workers);
+        renderCounter(workers);
+      }
+      setInterval(refresh, 1000);
+      refresh();
+      document.getElementById("run-btn").onclick = runOperation;
+      document.getElementById("chunksize-input").onchange = (e) => {
+        setChunkSize(Number(e.target.value));
+      };
+      document.getElementById("start-worker-btn").onclick = startWorker;
+    </script>
+  </body>
+</html>
